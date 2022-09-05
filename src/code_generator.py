@@ -1,8 +1,10 @@
+#original by PraAnj
+#edits by br-ow
 #!/usr/bin/python3
 
 import os
 import mmap
-import random
+import secrets
 from pathlib import Path
 from bitarray import bitarray
 import shutil
@@ -29,8 +31,7 @@ def mark_magic_numbers_as_used(array):
 def get_random_sub_folder(current_dir):
     p = Path(current_dir)
     sub_folder_names = [f.name for f in p.iterdir() if f.is_dir()]
-    random_decimal = random.randint(0, len(sub_folder_names)-1)
-    sub_folder = sub_folder_names[random_decimal]
+    sub_folder = secrets.choice(sub_folder_names)
     is_last_folder = (len(sub_folder_names) == 1)
     return sub_folder, os.path.join(current_dir, sub_folder), is_last_folder
 
@@ -69,8 +70,7 @@ def pop_random_hexa(level, prefix_dir):
             array = bitarray(buffer=mapping)
             indices = [i for i, bit in enumerate(array) if bit == False]
             if (len(indices) > 0):
-                index = random.randint(0, len(indices)-1)
-                random_decimal = indices[index]
+                random_decimal = secrets.choice(indices)
                 array[random_decimal] = True       # persist used number
                 delete_me = (len(indices) == 1)  # if last index is choosen
                 return format(random_decimal, 'X'), delete_me
