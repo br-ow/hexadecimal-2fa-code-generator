@@ -5,6 +5,7 @@
 import os
 import mmap
 import secrets
+import pyzipper
 from pathlib import Path
 from bitarray import bitarray
 import shutil
@@ -18,6 +19,9 @@ CHARACTERS = ['0', '1', '2', '3', '4', '5', '6',
               '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
 MAGIC_NUMBERS_FILE = '../data/magic-hexa-numbers.txt'
 ROOT_DIR = os.path.join(os.getcwd(), ROOT_FOLDER_NAME)
+PASSWORD = b'this is a temporary password'
+ZIPNAME = ROOT_FOLDER_NAME + '.zip'
+ZIPPATH = ROOT_DIR + '.zip'
 
 
 def mark_magic_numbers_as_used(array):
@@ -55,11 +59,17 @@ def create_sub_dirs(level, prefix_dir, array):
 
 
 def prepare_initial_setup():
-    if not os.path.exists(ROOT_FOLDER_NAME):
+    if not os.path.exists(ZIPPATH):
         initial_data = bitarray(NUMBERS_COUNT)
         initial_data.setall(0)  # False
         mark_magic_numbers_as_used(initial_data)
         create_sub_dirs(1, ROOT_DIR, initial_data)
+    else:
+        #unzip folder
+        with pyzipper.AESZipFile(ZIPNAME) as zf:
+            zf.setpassword(PASSWORD)
+            zf.extractall()
+
 
 
 def pop_random_hexa(level, prefix_dir):
@@ -87,8 +97,16 @@ def main():
     prepare_initial_setup()
     hex_code, delete_me = pop_random_hexa(1, ROOT_DIR)
     print("0x" + hex_code)
-    if delete_me:
-        shutil.rmtree(ROOT_DIR)  # deleting root finally
+    if not delete_me:
+        #re-encrypt files
+        with pyzipper.AESZipFile(ZIPNAME, 'w', compression=pyzipper.ZIP_LZMA,
+        encryption=pyzipper.WZ_AES) as zf:
+            zf.write(ROOT_DIR, arcname=ZIPNAME)
+            zf.close()
+    else:
+        #delete the zip
+        os.remove(ZIPPATH)
+    shutil.rmtree(ROOT_DIR)  # delete root when done
 
 
 if __name__ == "__main__":
